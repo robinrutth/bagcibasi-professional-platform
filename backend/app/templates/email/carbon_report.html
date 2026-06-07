@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 style="margin:0 0 16px;font-size:22px;color:#111827;">Aylık karbon raporunuz</h1>
+<p>Merhaba {{ customer.name }}, bu ayki karbon emisyonu özetiniz aşağıdadır.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;border-collapse:collapse;">
+  <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;">Toplam CO2</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;">{{ "%.2f"|format(summary.total_co2_kg|default(0)) }} kg</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;">Sevkiyat sayısı</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;">{{ summary.shipment_count|default(0) }}</td></tr>
+</table>
+<h2 style="margin:20px 0 8px;font-size:16px;color:#111827;">Araç dağılımı</h2>
+<ul style="padding-left:20px;margin:0;">
+  {% for item in summary.by_vehicle|default([]) %}
+  <li>{{ item.vehicle_type|default(item.name|default("-")) }}: {{ item.total_co2_kg|default(item.value|default(0)) }} kg CO2</li>
+  {% else %}
+  <li>Bu dönem için dağılım verisi yok.</li>
+  {% endfor %}
+</ul>
+<p style="margin-top:20px;">Öneri: rota optimizasyonu ve uygun araç seçimiyle emisyon azaltımı hedeflenebilir.</p>
+{% endblock %}

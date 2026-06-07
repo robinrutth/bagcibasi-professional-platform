@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 style="margin:0 0 16px;font-size:22px;color:#111827;">Sevkiyat durumu güncellendi</h1>
+<p>Merhaba {{ customer.name }}, #{{ shipment.id }} numaralı sevkiyatınızın güncel durumu: <strong>{{ shipment.status }}</strong>.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;border-collapse:collapse;">
+  <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;">Rota</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;">{{ route }}</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;">Araç tipi</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;">{{ shipment.vehicle_type }}</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid #e5e7eb;">Tahmini teslim</td><td style="padding:8px;border-bottom:1px solid #e5e7eb;">{{ shipment.delivery_date }}</td></tr>
+</table>
+{% endblock %}

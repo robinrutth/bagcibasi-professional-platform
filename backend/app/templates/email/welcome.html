@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 style="margin:0 0 16px;font-size:22px;color:#111827;">Platforma hoş geldiniz</h1>
+<p>Merhaba {{ user.name|default(user.full_name, true)|default(user.username, true) }}, hesabınız oluşturuldu.</p>
+<p>
+  <a href="{{ frontend_url }}" style="display:inline-block;background:#16a34a;color:#ffffff;text-decoration:none;padding:10px 16px;border-radius:6px;font-weight:700;">Giriş yap</a>
+</p>
+{% endblock %}

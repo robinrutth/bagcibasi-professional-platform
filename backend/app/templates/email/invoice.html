@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+  <p>Merhaba {{ customer.name if customer else "" }},</p>
+  <p>Sevkiyat faturaniz ekte PDF olarak yer almaktadir.</p>
+  <p style="margin-top:18px;color:#16a34a;font-weight:700;">Bağcıbaşı Lojistik AI</p>
+{% endblock %}

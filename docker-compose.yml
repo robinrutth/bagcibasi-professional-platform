@@ -1,0 +1,116 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: bagcibasi_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-bagcibasi_logistics}
+      POSTGRES_USER: ${POSTGRES_USER:-bagcibasi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bagcibasi_dev_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+    container_name: bagcibasi_backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-bagcibasi}:${POSTGRES_PASSWORD:-bagcibasi_dev_password}@db:5432/${POSTGRES_DB:-bagcibasi_logistics}?client_encoding=utf8
+      SECRET_KEY: ${SECRET_KEY:-local-dev-secret-change-in-prod}
+      APP_SECRET_KEY: ${APP_SECRET_KEY:-local-dev-secret-change-in-prod}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-15}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost,http://localhost:3000}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DEBUG: "false"
+      SEED_DEMO_DATA: "false"
+    volumes:
+      - static_files:/app/static
+    ports:
+      - "8000:8000"
+    expose:
+      - "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost}
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost}
+    container_name: bagcibasi_frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost}
+    expose:
+      - "3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000 >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  nginx:
+    image: nginx:1.27
+    container_name: bagcibasi_ng
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d:ro
+    depends_on:
+      - backend
+      - frontend
+
+  osrm:
+    image: osrm/osrm-backend
+    container_name: bagcibasi_osrm
+    restart: unless-stopped
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./osrm-data:/data
+    command: osrm-routed --algorithm mld /data/turkey-latest.osrm
+    profiles:
+      - routing
+
+  vroom:
+    image: vroomvrp/vroom-docker:v1.13.0
+    container_name: bagcibasi_vroom
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - VROOM_ROUTER=osrm
+    depends_on:
+      - osrm
+    profiles:
+      - routing
+
+volumes:
+  postgres_data:
+    name: bagcibasi_postgres_data_v15_migrations
+  static_files:

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{ invoice_no }}</title>
+    <style>
+      @page { size: A4; margin: 18mm; }
+      body { font-family: Arial, sans-serif; color: #172033; font-size: 12px; }
+      .brand { color: #16a34a; font-weight: 700; font-size: 22px; }
+      .header { border-bottom: 2px solid #16a34a; padding-bottom: 16px; display: flex; justify-content: space-between; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 20px 0; }
+      .box { border: 1px solid #dbe4ee; padding: 12px; }
+      h1, h2 { margin: 0 0 8px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+      th { background: #16a34a; color: white; text-align: left; }
+      th, td { border: 1px solid #dbe4ee; padding: 9px; }
+      .carbon { background: #dcfce7; border: 1px solid #16a34a; color: #166534; padding: 12px; margin-top: 16px; font-weight: 700; }
+      .total { font-size: 16px; font-weight: 700; text-align: right; }
+      footer { margin-top: 30px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div>
+        <div class="brand">{{ platform_name }}</div>
+        <h1>PDF Fatura</h1>
+      </div>
+      <div>
+        <strong>Fatura No:</strong> {{ invoice_no }}<br />
+        <strong>Tarih:</strong> {{ issued_at.strftime("%Y-%m-%d %H:%M") }}
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="box">
+        <h2>Musteri Bilgileri</h2>
+        <p><strong>Ad:</strong> {{ customer.name if customer else shipment.customer_name }}</p>
+        <p><strong>Adres:</strong> {{ customer.address if customer and customer.address else "-" }}</p>
+        <p><strong>Vergi No:</strong> {{ customer.tax_number if customer and customer.tax_number else "-" }}</p>
+      </div>
+      <div class="box">
+        <h2>Sevkiyat Detaylari</h2>
+        <p><strong>Rota:</strong> {{ shipment.origin }} - {{ shipment.destination }}</p>
+        <p><strong>Agirlik:</strong> {{ shipment.weight_kg or shipment.tonnage * 1000 }} kg</p>
+        <p><strong>Mesafe:</strong> {{ shipment.distance_km }} km</p>
+        <p><strong>Arac:</strong> {{ shipment.vehicle_type }}</p>
+      </div>
+    </section>
+
+    <table>
+      <thead>
+        <tr><th>Kalem</th><th>Miktar</th><th>Tutar</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ shipment.origin }} - {{ shipment.destination }} lojistik hizmeti</td>
+          <td>1 sevkiyat</td>
+          <td>{{ "%.2f"|format(subtotal) }} TRY</td>
+        </tr>
+        <tr>
+          <td>Karbon emisyonu bilgilendirme</td>
+          <td>{{ "%.2f"|format(shipment.co2_kg) }} kg CO2</td>
+          <td>0.00 TRY</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="total">Toplam: {{ "%.2f"|format(total_amount) }} TRY</p>
+    <div class="carbon">Karbon Emisyonu: {{ "%.2f"|format(shipment.co2_kg) }} kg CO2</div>
+    <footer>{{ platform_name }} | operasyon@bagcibasi-lojistik.local | +90 236 000 00 00</footer>
+  </body>
+</html>

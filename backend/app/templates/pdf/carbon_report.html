@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Karbon Raporu</title>
+    <style>
+      @page { size: A4; margin: 18mm; }
+      body { font-family: Arial, sans-serif; color: #172033; font-size: 12px; }
+      .brand { color: #16a34a; font-weight: 700; font-size: 22px; }
+      .header { border-bottom: 2px solid #16a34a; padding-bottom: 16px; display: flex; justify-content: space-between; }
+      .badge { display: inline-block; background: #dcfce7; color: #166534; border: 1px solid #16a34a; padding: 8px 12px; font-weight: 700; }
+      table { width: 100%; border-collapse: collapse; margin: 14px 0 22px; }
+      th { background: #16a34a; color: white; text-align: left; }
+      th, td { border: 1px solid #dbe4ee; padding: 9px; }
+      h1, h2 { margin-bottom: 8px; }
+      .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 18px 0; }
+      .metric { border: 1px solid #dbe4ee; padding: 10px; }
+      .metric strong { display: block; font-size: 16px; }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div>
+        <div class="brand">{{ platform_name }}</div>
+        <h1>Karbon Emisyon Raporu</h1>
+      </div>
+      <div>
+        <strong>Musteri:</strong> {{ customer.name }}<br />
+        <strong>Donem:</strong> {{ period }}<br />
+        <strong>Tarih:</strong> {{ issued_at.strftime("%Y-%m-%d %H:%M") }}
+      </div>
+    </header>
+
+    <section class="summary">
+      <div class="metric"><span>Toplam CO2</span><strong>{{ "%.2f"|format(summary.total_co2_kg) }} kg</strong></div>
+      <div class="metric"><span>Shipment</span><strong>{{ summary.shipment_count }}</strong></div>
+      <div class="metric"><span>Ortalama</span><strong>{{ "%.2f"|format(summary.average_co2_kg) }} kg</strong></div>
+      <div class="metric"><span>Etiket</span><strong>{{ label }}</strong></div>
+    </section>
+
+    <span class="badge">Yesil lojistik rozeti</span>
+
+    <h2>Arac Tipi Dagilimi</h2>
+    <table>
+      <thead><tr><th>Arac Tipi</th><th>CO2</th></tr></thead>
+      <tbody>
+        {% for item in summary.by_vehicle %}
+        <tr><td>{{ item.vehicle_type }}</td><td>{{ "%.2f"|format(item.co2) }} kg</td></tr>
+        {% else %}
+        <tr><td>Veri yok</td><td>0 kg</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2>En Kirletici Rotalar</h2>
+    <table>
+      <thead><tr><th>Rota</th><th>Arac</th><th>Shipment</th><th>CO2</th></tr></thead>
+      <tbody>
+        {% for route in summary.top_routes %}
+        <tr>
+          <td>{{ route.origin }} - {{ route.destination }}</td>
+          <td>{{ route.vehicle_type }}</td>
+          <td>{{ route.shipment_count }}</td>
+          <td>{{ "%.2f"|format(route.co2) }} kg</td>
+        </tr>
+        {% else %}
+        <tr><td>Veri yok</td><td>-</td><td>0</td><td>0 kg</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2>Sektor Ortalamasiyla Karsilastirma</h2>
+    <p>{{ summary.benchmark_note }}</p>
+  </body>
+</html>
